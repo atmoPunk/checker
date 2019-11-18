@@ -3,4 +3,14 @@
 [[package]]
 name = "checker"
 version = "0.1.0"
+dependencies = [
+ "serde 1.0.102 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
+[[package]]
+name = "serde"
+version = "1.0.102"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[metadata]
+"checksum serde 1.0.102 (registry+https://github.com/rust-lang/crates.io-index)" = "0c4b39bd9b0b087684013a792c59e3e07a46a01d2322518d8a1104641a0b1be0"

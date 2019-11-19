@@ -38,5 +38,9 @@ fn main() {
 
     println!("Start building");
     lab.students["Ivanov"].program.build().unwrap();
+    for test in lab.students["Ivanov"].var.tests.iter() {
+        let test_res = lab.students["Ivanov"].program.run(test.input.clone());
+        println!("{:?}", test_res);
+    }
     println!("Stop building");
 }

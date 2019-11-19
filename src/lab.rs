@@ -3,6 +3,7 @@ use crate::test::Test;
 use futures::future::join_all;
 use std::collections::HashMap;
 use std::fs;
+use std::time::Instant;
 
 #[derive(Debug, Clone)]
 pub struct Lab {
@@ -66,12 +67,14 @@ impl Student {
     pub async fn check(&self) -> Result<(), LabError> {
         self.program.build().expect("Can't build a program");
         for (i, test) in self.var.tests.iter().enumerate() {
+            let start = Instant::now();
             match self.program.run(&test.input) {
                 Ok(output) => {
+                    let output = output.trim();
                     let true_output =
                         String::from_utf8(fs::read(&test.output).expect("Can't open test output"))
                             .expect("Can't parse test output");
-                    if output.trim() != true_output.trim() {
+                    if output != true_output.trim() {
                         eprintln!("Got:\n{}", output);
                         eprintln!("Expected:\n{}", true_output);
                         return Err(LabError::WrongAnswer(i));
@@ -82,6 +85,10 @@ impl Student {
                     return Err(LabError::Error(i));
                 }
             }
+            let dur = start.elapsed().as_secs_f64();
+            if dur - test.time_limit > std::f64::EPSILON {
+                return Err(LabError::TimeLimit(i));
+            }
         }
 
         Ok(())
@@ -91,5 +98,6 @@ impl Student {
 #[derive(Debug, Clone)]
 pub enum LabError {
     WrongAnswer(usize),
+    TimeLimit(usize),
     Error(usize),
 }

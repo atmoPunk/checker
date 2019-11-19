@@ -38,7 +38,7 @@ impl Program {
     pub fn build(&self) -> Result<(), BuildError> {
         match self.lang {
             Lang::Cpp => {
-                // TODO: Currently we are using user-made Makefiles
+                // Currently we are using user-made Makefiles
                 let build = Command::new("make").current_dir(&self.path_to_src).output();
                 match build {
                     Ok(output) => {

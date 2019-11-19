@@ -1,7 +1,6 @@
 use std::fs::File;
-use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::Command;
 
 #[derive(Debug, Clone)]
 pub enum Lang {
@@ -68,7 +67,7 @@ impl Program {
                         String::from_utf8(output.stderr).unwrap(),
                     ))
                 } else {
-                    Ok(String::from_utf8(output.stdout).unwrap())
+                    Ok(String::from_utf8(output.stdout).unwrap()) // Maybe send Vec<u8>, without converting?
                 }
             }
             Err(_) => Err(RunError::ProcessSpawnError),

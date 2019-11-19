@@ -9,6 +9,8 @@ use test::*;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use futures::executor::block_on;
+
 fn main() {
     let test1 = Test::new(
         PathBuf::from("./tests/test1.in"),
@@ -33,12 +35,9 @@ fn main() {
     let stud = Student::new(prog, var, None);
     let mut lab = Lab::new(HashMap::new());
     lab.students.insert(String::from("Ivanov"), stud);
-
-    for (student_name, student_res) in lab.students.iter() {
-        println!(
-            "Student: {}, Result: {:?}",
-            student_name,
-            student_res.check()
-        );
+    let future = lab.check_all();
+    let results = block_on(future);
+    for (name, s) in results.iter() {
+        println!("Student: {}, Result: {:?}", name, s);
     }
 }

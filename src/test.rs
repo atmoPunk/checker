@@ -18,9 +18,3 @@ impl Test {
         }
     }
 }
-
-#[derive(Debug, Clone)]
-pub enum TestResult {
-    Ok,
-    Error,
-}

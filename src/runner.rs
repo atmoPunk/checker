@@ -1,7 +1,7 @@
-use std::path::PathBuf;
-use std::process::{Command, Stdio};
-use std::io::Write;
 use std::fs::File;
+use std::io::Write;
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
 
 #[derive(Debug, Clone)]
 pub enum Lang {
@@ -40,9 +40,7 @@ impl Program {
         match self.lang {
             Lang::Cpp => {
                 // TODO: Currently we are using user-made Makefiles
-                let build = Command::new("make")
-                    .current_dir(self.path_to_src.clone())
-                    .output();
+                let build = Command::new("make").current_dir(&self.path_to_src).output();
                 match build {
                     Ok(output) => {
                         if !output.status.success() {
@@ -52,28 +50,28 @@ impl Program {
                         } else {
                             Ok(())
                         }
-                    },
+                    }
                     Err(_) => Err(BuildError::ProcessSpawnError),
                 }
             }
         }
     }
 
-    pub fn run(&self, input_file: PathBuf) -> Result<String, RunError> {
-        let prog = Command::new(self.path_to_exe.clone())
+    pub fn run(&self, input_file: &Path) -> Result<String, RunError> {
+        let prog = Command::new(&self.path_to_exe)
             .stdin(File::open(input_file).expect("Can't open input_file"))
             .output();
         match prog {
             Ok(output) => {
                 if !output.status.success() {
                     Err(RunError::RuntimeError(
-                        String::from_utf8(output.stderr).unwrap()
+                        String::from_utf8(output.stderr).unwrap(),
                     ))
                 } else {
                     Ok(String::from_utf8(output.stdout).unwrap())
                 }
-            },
-            Err(_) => Err(RunError::ProcessSpawnError)
+            }
+            Err(_) => Err(RunError::ProcessSpawnError),
         }
     }
 }

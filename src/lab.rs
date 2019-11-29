@@ -1,11 +1,12 @@
 use crate::runner::Program;
 use crate::test::Test;
 use futures::future::join_all;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::time::Instant;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Lab {
     pub students: HashMap<String, Student>,
 }
@@ -31,7 +32,7 @@ impl Lab {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Variant {
     pub tests: Vec<Test>,
 }
@@ -42,13 +43,7 @@ impl Variant {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct LabConfig {
-    pub var_num: usize,
-    pub vars: Vec<Variant>,
-}
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Student {
     pub program: Program,
     pub var: Variant,
@@ -95,7 +90,7 @@ impl Student {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum LabError {
     WrongAnswer(usize),
     TimeLimit(usize),

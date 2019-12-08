@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+extern crate async_std;
 extern crate futures;
 extern crate serde;
 extern crate serde_json;
@@ -9,7 +10,7 @@ mod runner;
 mod test;
 
 use futures::executor::block_on;
-use lab::*;
+pub use lab::*;
 use std::fs::File;
 use std::io::BufReader;
 

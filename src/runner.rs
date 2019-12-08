@@ -8,23 +8,23 @@ pub enum Lang {
     Cpp,
 }
 
+/// Abstraction around students program
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Program {
     lang: Lang,
+    /// Path to Makefile
     path_to_src: PathBuf,
+    /// Path to executable after it's built
     path_to_exe: PathBuf,
 }
 
-#[derive(Debug, Clone)]
-pub enum BuildError {
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum RunnerError {
     ProcessSpawnError,
+    /// Contains stderr of the build system
     CompilationError(String),
-}
-
-#[derive(Debug, Clone)]
-pub enum RunError {
+    /// Contains stderr of the failed program
     RuntimeError(String),
-    ProcessSpawnError,
 }
 
 impl Program {
@@ -36,7 +36,8 @@ impl Program {
         }
     }
 
-    pub fn build(&self) -> Result<(), BuildError> {
+    /// Tries to build a program
+    pub fn build(&self) -> Result<(), RunnerError> {
         match self.lang {
             Lang::Cpp => {
                 // Currently we are using user-made Makefiles
@@ -44,34 +45,36 @@ impl Program {
                 match build {
                     Ok(output) => {
                         if !output.status.success() {
-                            Err(BuildError::CompilationError(
+                            Err(RunnerError::CompilationError(
                                 String::from_utf8(output.stderr).unwrap(),
                             ))
                         } else {
                             Ok(())
                         }
                     }
-                    Err(_) => Err(BuildError::ProcessSpawnError),
+                    Err(_) => Err(RunnerError::ProcessSpawnError),
                 }
             }
         }
     }
 
-    pub fn run(&self, input_file: &Path) -> Result<String, RunError> {
+    /// Runs a program, redirecting contents of input_file to stdin of program
+    /// On success returns stdout of the program
+    pub fn run(&self, input_file: &Path) -> Result<String, RunnerError> {
         let prog = Command::new(&self.path_to_exe)
             .stdin(File::open(input_file).expect("Can't open input_file"))
             .output();
         match prog {
             Ok(output) => {
                 if !output.status.success() {
-                    Err(RunError::RuntimeError(
+                    Err(RunnerError::RuntimeError(
                         String::from_utf8(output.stderr).unwrap(),
                     ))
                 } else {
                     Ok(String::from_utf8(output.stdout).unwrap()) // Maybe send Vec<u8>, without converting?
                 }
             }
-            Err(_) => Err(RunError::ProcessSpawnError),
+            Err(_) => Err(RunnerError::ProcessSpawnError),
         }
     }
 }

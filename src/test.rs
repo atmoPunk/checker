@@ -1,11 +1,15 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
+/// Abstraction of single test in a lab
+/// Has path to file with input, with expected output,
+/// Time limit in seconds, and memory limit (currently not implemented)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Test {
     pub input: PathBuf,
     pub output: PathBuf,
-    pub time_limit: f64,     // seconds
+    /// Maximum number of seconds to execute a program
+    pub time_limit: f64,
     pub memory_limit: usize, // bytes?
 }
 

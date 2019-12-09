@@ -6,8 +6,10 @@ extern crate serde;
 extern crate serde_json;
 
 mod lab;
-mod runner;
+mod program;
+mod student;
 mod test;
+mod variant;
 
 use futures::executor::block_on;
 pub use lab::*;

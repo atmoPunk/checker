@@ -1,4 +1,5 @@
-pub use crate::runner::{Program, RunnerError};
+pub use crate::program::{Program, RunnerError};
+pub use crate::student::Student;
 pub use crate::test::Test;
 use async_std::fs;
 use futures::future::join_all;
@@ -48,62 +49,6 @@ pub struct Variant {
 impl Variant {
     pub fn new(tests: Vec<Test>) -> Self {
         Variant { tests }
-    }
-}
-
-/// Holds path to program, current variant and last check result
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Student {
-    pub program: Program,
-    pub var: Variant,
-    pub result: Option<Result<(), LabError>>,
-}
-
-impl Student {
-    pub fn new(program: Program, var: Variant, result: Option<Result<(), LabError>>) -> Self {
-        Student {
-            program,
-            var,
-            result,
-        }
-    }
-
-    /** Builds a program written by student and then runs all tests from variant sequentually.
-    Stops on the first test that fails.
-    Panics if tests can't be opened or parsed to utf8 (we can read them as bytes) */
-    pub async fn check(&self) -> Result<(), LabError> {
-        if let Err(build_error) = self.program.build() {
-            return Err(LabError::BuildError(build_error));
-        }
-        for (i, test) in self.var.tests.iter().enumerate() {
-            let start = Instant::now();
-            let out = self.program.run(&test.input); // Running program
-            let dur = start.elapsed().as_secs_f64();
-            if dur - test.time_limit > std::f64::EPSILON {
-                return Err(LabError::TimeLimit(i));
-            }
-            match out {
-                Ok(output) => {
-                    let output = output.trim();
-                    let true_output = String::from_utf8(
-                        fs::read(&test.output)
-                            .await
-                            .expect("Can't open test output"),
-                    )
-                    .expect("Can't parse test output");
-                    if output != true_output.trim() {
-                        eprintln!("Got:\n{}", output); // TODO: send it up, so we can send it to students later
-                        eprintln!("Expected:\n{}", true_output);
-                        return Err(LabError::WrongAnswer(i));
-                    }
-                }
-                Err(e) => {
-                    return Err(LabError::RuntimeError(i, e)); // Program has encountered a runtime error
-                }
-            }
-        }
-
-        Ok(())
     }
 }
 

@@ -20,6 +20,8 @@ pub struct Program {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RunnerError {
+    /// Corresponds to failure while launching build process or luanching program itself
+    /// (Not a student's fault)
     ProcessSpawnError,
     /// Contains stderr of the build system
     CompilationError(String),
@@ -60,6 +62,7 @@ impl Program {
 
     /// Runs a program, redirecting contents of input_file to stdin of program
     /// On success returns stdout of the program
+    /// Panics if it can't open input file
     pub fn run(&self, input_file: &Path) -> Result<String, RunnerError> {
         let prog = Command::new(&self.path_to_exe)
             .stdin(File::open(input_file).expect("Can't open input_file"))

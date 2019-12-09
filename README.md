@@ -19,3 +19,7 @@ cargo build
 
 ## Running
 cargo run
+
+## File structure
+* tests - tests for checking example programs
+* test_progs - example programs for checking

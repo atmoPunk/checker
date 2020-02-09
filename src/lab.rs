@@ -1,11 +1,10 @@
 pub use crate::program::{Program, RunnerError};
 pub use crate::student::Student;
 pub use crate::test::Test;
-use async_std::fs;
+
 use futures::future::join_all;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::time::Instant;
 
 /// Holds current students in a HashMap (Student name -> Student struct)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -23,6 +22,10 @@ impl Lab {
         self.students[student].check().await
     }
 
+    pub fn build_doxygen(&self, student: &str) -> Result<(), LabError> {
+        self.students[student].build_doxygen()
+    }
+
     /// Checks all students
     pub async fn check_all(&self) -> HashMap<String, Result<(), LabError>> {
         let mut checks = Vec::new();
@@ -37,18 +40,6 @@ impl Lab {
             result.insert(names[i].to_owned(), checks_finish[i].to_owned());
         }
         result
-    }
-}
-
-/// Holds paths to test files for the variant
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Variant {
-    pub tests: Vec<Test>,
-}
-
-impl Variant {
-    pub fn new(tests: Vec<Test>) -> Self {
-        Variant { tests }
     }
 }
 

@@ -80,4 +80,8 @@ impl Program {
             Err(_) => Err(RunnerError::ProcessSpawnError),
         }
     }
+
+    pub fn src(&self) -> PathBuf {
+        self.path_to_src.clone()
+    }
 }

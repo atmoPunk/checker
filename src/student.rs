@@ -3,7 +3,11 @@ pub use crate::program::Program;
 pub use crate::variant::Variant;
 use async_std::fs;
 use serde::{Deserialize, Serialize};
+use std::process::Command;
 use std::time::Instant;
+
+/// Path to doxygen config
+static DOXYFILE: &str = "/home/atmopunk/doxygen.config";
 
 /// Holds path to program, current variant and last check result
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -34,9 +38,32 @@ impl Student {
         }
         for i in 0..self.var.tests.len() {
             self.check_test(i).await? // '?' syntax - if we encounter a Err -> we return early and send it up
-                                      // Else - we continure running
+                                      // else - we continure running
         }
 
+        Ok(())
+    }
+
+    pub fn build_doxygen(&self) -> Result<(), LabError> {
+        let folder = self.program.src();
+        println!("folder: {:?}", folder);
+        let mut xmlfolder = folder.clone();
+        xmlfolder.push("xml");
+        println!("folder: {:?}", xmlfolder);
+
+        let _doxygen = Command::new("doxygen")
+            .arg(DOXYFILE)
+            .current_dir(folder)
+            .status()
+            .unwrap();
+        let xs = "xsltproc";
+        let _concatenate = Command::new(xs)
+            .current_dir(xmlfolder)
+            .arg("combine.xslt")
+            .arg("index.xml")
+            .output()
+            .unwrap();
+        //concatenate.stdout TODO: dump this to all xml
         Ok(())
     }
 

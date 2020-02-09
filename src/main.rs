@@ -25,4 +25,5 @@ fn main() {
     for (name, s) in results.iter() {
         println!("Student: {}, Result: {:?}", name, s);
     }
+    lab.build_doxygen("Ivanov");
 }

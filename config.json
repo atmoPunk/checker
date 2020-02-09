@@ -3,7 +3,7 @@
       "Ivanov": {
         "program": {
           "lang": "Cpp",
-          "path_to_src": "/home/atmopunk/Documents/Code/checker/prog",
+          "path_to_src": "/home/atmopunk/Documents/Code/checker/test_progs/prog",
           "path_to_exe": "./test_progs/prog/prog.out"
         },
         "var": {
@@ -33,7 +33,7 @@
       "Nikitin": {
         "program": {
           "lang": "Cpp",
-          "path_to_src": "/home/atmopunk/Documents/Code/checker/prog2",
+          "path_to_src": "/home/atmopunk/Documents/Code/checker/test_progs/prog2",
           "path_to_exe": "./test_progs/prog2/prog.out"
         },
         "var": {

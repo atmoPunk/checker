@@ -1,29 +1,38 @@
 #![allow(dead_code)]
 
-extern crate async_std;
-extern crate futures;
-extern crate serde;
-extern crate serde_json;
-
 mod lab;
 mod program;
 mod student;
 mod test;
 mod variant;
+mod github_client;
 
 use futures::executor::block_on;
 pub use lab::*;
 use std::fs::File;
 use std::io::BufReader;
 
+#[derive(Debug, Clone)]
+struct Commit {
+    sha: String,
+    message: String,
+}
 fn main() {
-    let file_config = File::open("config.json").expect("Can't open config");
-    let reader = BufReader::new(file_config);
-    let lab: Lab = serde_json::from_reader(reader).expect("Can't deserialize json");
-    let future = lab.check_all();
-    let results = block_on(future);
-    for (name, s) in results.iter() {
-        println!("Student: {}, Result: {:?}", name, s);
+    // let file_config = File::open("config.json").expect("Can't open config");
+    // let reader = BufReader::new(file_config);
+    // let lab: Lab = serde_json::from_reader(reader).expect("Can't deserialize json");
+    // let future = lab.check_all();
+    // let results = block_on(future);
+    // for (name, s) in results.iter() {
+    //     println!("Student: {}, Result: {:?}", name, s);
+    // }
+    // lab.build_doxygen("Ivanov");
+    let commits_json = github_client::get_commits("atmoPunk", "checker").unwrap();
+    let mut commits: Vec<Commit> = Vec::new();
+    for commit in commits_json.as_array().unwrap().iter() {
+        commits.push(Commit { sha: commit["sha"].as_str().unwrap().to_owned(), message: commit["commit"]["message"].as_str().unwrap().to_owned() });
     }
-    lab.build_doxygen("Ivanov");
+    for commit in commits.iter() {
+        println!("{:?}", commit);
+    }
 }

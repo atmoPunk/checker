@@ -3,38 +3,8 @@
       "Ivanov": {
         "program": {
           "lang": "Cpp",
-          "path_to_src": "/home/atmopunk/Documents/Code/checker/test_progs/prog",
-          "path_to_exe": "./test_progs/prog/prog.out"
-        },
-        "var": {
-          "tests": [
-            {
-              "input": "./tests/test1.in",
-              "output": "./tests/test1.out",
-              "time_limit": 1,
-              "memory_limit": 1
-            },
-            {
-              "input": "./tests/test2.in",
-              "output": "./tests/test2.out",
-              "time_limit": 1,
-              "memory_limit": 1
-            },
-            {
-              "input": "./tests/test3.in",
-              "output": "./tests/test3.out",
-              "time_limit": 1,
-              "memory_limit": 1
-            }
-          ]
-        },
-        "result": null
-      },
-      "Nikitin": {
-        "program": {
-          "lang": "Cpp",
-          "path_to_src": "/home/atmopunk/Documents/Code/checker/test_progs/prog2",
-          "path_to_exe": "./test_progs/prog2/prog.out"
+          "repo": "test1",
+          "owner": "atmoPunk"
         },
         "var": {
           "tests": [

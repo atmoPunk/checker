@@ -45,7 +45,7 @@ impl Student {
     }
 
     pub fn build_doxygen(&self) -> Result<(), LabError> {
-        let folder = self.program.src();
+        let folder = self.program.path();
         println!("folder: {:?}", folder);
         let mut xmlfolder = folder.clone();
         xmlfolder.push("xml");

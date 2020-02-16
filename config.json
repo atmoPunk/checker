@@ -1,34 +1,35 @@
 {
-    "students": {
-      "Ivanov": {
-        "program": {
-          "lang": "Cpp",
-          "repo": "test1",
-          "owner": "atmoPunk"
-        },
-        "var": {
-          "tests": [
-            {
-              "input": "./tests/test1.in",
-              "output": "./tests/test1.out",
-              "time_limit": 1,
-              "memory_limit": 1
-            },
-            {
-              "input": "./tests/test2.in",
-              "output": "./tests/test2.out",
-              "time_limit": 1,
-              "memory_limit": 1
-            },
-            {
-              "input": "./tests/test3.in",
-              "output": "./tests/test3.out",
-              "time_limit": 1,
-              "memory_limit": 1
-            }
-          ]
-        },
-        "result": null
-      }
+  "students": {
+    "Ivanov": {
+      "program": {
+        "lang": "Cpp",
+        "last_commit": "a6c275adae1e981212f3ae488f4fa057e0c00ac4",
+        "repo": "test1",
+        "owner": "atmoPunk"
+      },
+      "var": {
+        "tests": [
+          {
+            "input": "./tests/test1.in",
+            "output": "./tests/test1.out",
+            "time_limit": 1.0,
+            "memory_limit": 1
+          },
+          {
+            "input": "./tests/test2.in",
+            "output": "./tests/test2.out",
+            "time_limit": 1.0,
+            "memory_limit": 1
+          },
+          {
+            "input": "./tests/test3.in",
+            "output": "./tests/test3.out",
+            "time_limit": 1.0,
+            "memory_limit": 1
+          }
+        ]
+      },
+      "result": null
     }
   }
+}

@@ -54,7 +54,7 @@ pub fn pull_repo(owner: &str, repo: &str) -> std::io::Result<()> {
 
 pub fn write_comment(owner: &str, repo: &str, commit: &str, comment: &str) -> std::io::Result<serde_json::value::Value> {
     let resp = ureq::post(&format!("https://api.github.com/repos/{}/{}/commits/{}/comments", owner, repo, commit))
-        .set("Authorization", &format!("token {}", env::var("GITHUB_TOKEN").unwrap()))
+        .set("Authorization", &format!("token {}", env::var("GITHUB_TOKEN").expect("NO TOKEN IN ENV")))
         .send_json(serde_json::json!({"body": comment, "path": serde_json::value::Value::Null, "position": serde_json::value::Value::Null}));
 
     if resp.ok() {

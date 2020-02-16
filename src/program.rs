@@ -12,6 +12,7 @@ pub enum Lang {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Program {
     lang: Lang,
+    pub last_commit: Option<String>,
     pub repo: String,
     pub owner: String,
 }
@@ -28,9 +29,10 @@ pub enum RunnerError {
 }
 
 impl Program {
-    pub fn new(lang: Lang, repo: String, owner: String) -> Self {
+    pub fn new(lang: Lang, last_commit: Option<String>, repo: String, owner: String) -> Self {
         Program {
             lang,
+            last_commit,
             repo,
             owner
         }

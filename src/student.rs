@@ -6,6 +6,7 @@ use async_std::fs;
 use serde::{Deserialize, Serialize};
 use std::process::Command;
 use std::time::Instant;
+use slog::{Logger, o, info};
 
 /// Path to doxygen config
 static DOXYFILE: &str = "/home/atmopunk/doxygen.config";
@@ -33,12 +34,15 @@ impl Student {
     /** Builds a program written by student and then runs all tests from variant.
     Stops on the first test that fails.
     Panics if tests can't be opened or parsed to utf8 (we can read them as bytes) */
-    pub async fn check(&self) -> Result<(), LabError> {
+    pub async fn check(&self, logger: Logger) -> Result<(), LabError> {
         if let Err(build_error) = self.program.build() {
+            info!(logger, "Build error");
             return Err(LabError::BuildError(build_error));
         }
+        info!(logger, "Build success");
         for i in 0..self.var.tests.len() {
-            self.check_test(i).await? // '?' syntax - if we encounter a Err -> we return early and send it up
+            let test_logger = logger.new(o!("test" => i));
+            self.check_test(i, test_logger).await? // '?' syntax - if we encounter a Err -> we return early and send it up
                                       // else - we continure running
         }
 
@@ -79,12 +83,15 @@ impl Student {
     }
 
     /// Checks a single test without building
-    async fn check_test(&self, test_num: usize) -> Result<(), LabError> {
+    async fn check_test(&self, test_num: usize, logger: Logger) -> Result<(), LabError> {
         let test = &self.var.tests[test_num];
         let start_time = Instant::now();
+        info!(logger, "started test");
         let prog_output = self.program.run(&test.input);
+        info!(logger, "finished test");
         let duration = start_time.elapsed().as_secs_f64();
         if duration - test.time_limit > std::f64::EPSILON {
+            info!(logger, "Result: timeout");
             return Err(LabError::TimeLimit(test_num));
         }
         match prog_output {
@@ -99,14 +106,16 @@ impl Student {
                 if output != true_output.trim() {
                     eprintln!("Got:\n{}", output); // TODO: send it up, so we can send it to students later
                     eprintln!("Expected:\n{}", true_output);
+                    info!(logger, "Result: wrong answer");
                     return Err(LabError::WrongAnswer(test_num));
                 }
             }
             Err(e) => {
+                info!(logger, "Result: runtime error");
                 return Err(LabError::RuntimeError(test_num, e)); // Program has encountered a runtime error
             }
         }
-
+        info!(logger, "Result: ok");
         Ok(())
     }
 }

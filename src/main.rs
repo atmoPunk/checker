@@ -21,7 +21,6 @@ struct Commit {
 
 fn update_results(results: HashMap<String, Result<(), LabError>>, lab: &mut Lab) {
     for (name, s) in results.iter() {
-        println!("Student: {}, Result: {:?}", name, s);
         let owner = &lab.students[name].program.owner;
         let repo = &lab.students[name].program.repo;
         let commits_json = github::get_commits(owner, repo).unwrap();
@@ -51,7 +50,6 @@ fn main() {
         .expect("Can't open config");
     let reader = BufReader::new(file_config);
     let mut lab: Lab = serde_json::from_reader(reader).expect("Can't deserialize json");
-
     let update = lab.download_all(); // Download or update student repos
     block_on(update).unwrap(); // TODO: return students that changed, and run tests only for these students
 

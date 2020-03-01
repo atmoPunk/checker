@@ -5,21 +5,34 @@ pub use crate::test::Test;
 use futures::future::join_all;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use slog::{Drain, Logger, o};
+
+fn create_default_logger() -> Logger {
+    let decorator = slog_term::TermDecorator::new().build();
+    let drain = slog_term::CompactFormat::new(decorator).build().fuse();
+    let drain = slog_async::Async::new(drain).build().fuse();
+
+    slog::Logger::root(drain, o!("version" => "0.1"))
+}
 
 /// Holds current students in a HashMap (Student name -> Student struct)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Lab {
     pub students: HashMap<String, Student>,
+
+    #[serde(skip, default="create_default_logger")]
+    logger: Logger,
 }
 
 impl Lab {
     pub fn new(students: HashMap<String, Student>) -> Self {
-        Lab { students }
+        Lab { students, logger: create_default_logger() }
     }
 
     /// Starts checking current lab for this student
     pub async fn check(&self, student: &str) -> Result<(), LabError> {
-        self.students[student].check().await
+        let student_logger = self.logger.new(o!("student" => student.to_owned()));
+        self.students[student].check(student_logger).await
     }
 
     pub fn build_doxygen(&self, student: &str) -> Result<(), LabError> {
@@ -32,7 +45,8 @@ impl Lab {
         let mut names = Vec::with_capacity(self.students.len());
         for (name, s) in self.students.iter() {
             names.push(name);
-            checks.push(s.check());
+            let student_logger = self.logger.new(o!("student" => name.to_owned()));
+            checks.push(s.check(student_logger));
         }
         let checks_finish = join_all(checks).await;
         let mut result = HashMap::new();

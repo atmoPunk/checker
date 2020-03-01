@@ -1,3 +1,4 @@
+pub use crate::github::{clone_repo, pull_repo};
 pub use crate::lab::LabError;
 pub use crate::program::Program;
 pub use crate::variant::Variant;
@@ -42,6 +43,16 @@ impl Student {
         }
 
         Ok(())
+    }
+
+    pub async fn download(&self) -> Result<(), std::io::Error> {
+        if let Err(e) = clone_repo(&self.program.owner, &self.program.repo) {
+            if e.kind() != std::io::ErrorKind::AlreadyExists {
+                return Err(e);
+            }
+        }
+
+        pull_repo(&self.program.owner, &self.program.repo)
     }
 
     pub fn build_doxygen(&self) -> Result<(), LabError> {

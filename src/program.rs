@@ -34,7 +34,7 @@ impl Program {
             lang,
             last_commit,
             repo,
-            owner
+            owner,
         }
     }
 

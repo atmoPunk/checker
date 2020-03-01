@@ -28,8 +28,8 @@ impl Lab {
 
     /// Checks all students
     pub async fn check_all(&self) -> HashMap<String, Result<(), LabError>> {
-        let mut checks = Vec::new();
-        let mut names = Vec::new();
+        let mut checks = Vec::with_capacity(self.students.len());
+        let mut names = Vec::with_capacity(self.students.len());
         for (name, s) in self.students.iter() {
             names.push(name);
             checks.push(s.check());
@@ -40,6 +40,16 @@ impl Lab {
             result.insert(names[i].to_owned(), checks_finish[i].to_owned());
         }
         result
+    }
+
+    pub async fn download_all(&self) -> Result<(), std::io::Error> {
+        let mut downloads = Vec::with_capacity(self.students.len());
+        for (_, s) in self.students.iter() {
+            downloads.push(s.download());
+        }
+        let downloads: Result<Vec<_>, _> = join_all(downloads).await.into_iter().collect();
+        downloads?;
+        Ok(())
     }
 }
 

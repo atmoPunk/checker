@@ -29,7 +29,9 @@
           }
         ]
       },
-      "result": null
+      "result": {
+        "Ok": null
+      }
     }
   }
 }

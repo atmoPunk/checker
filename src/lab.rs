@@ -68,7 +68,7 @@ impl Lab {
         for (name, s) in self
             .students
             .iter()
-            .filter(|&(name, _)| names.iter().position(|n| name == n).is_some())
+            .filter(|&(name, _)| names.iter().any(|n| name == n))
         {
             let student_logger = self.logger.new(o!("student" => name.to_owned()));
             checks.push(s.check(student_logger));
@@ -86,8 +86,9 @@ impl Lab {
         let mut downloads = Vec::with_capacity(self.students.len());
         let mut students = Vec::with_capacity(self.students.len());
         for (name, s) in self.students.iter() {
+            let student_logger = self.logger.new(o!("student" => name.to_owned()));
             students.push(name.clone());
-            downloads.push(s.download());
+            downloads.push(s.download(student_logger));
         }
         let downloads: Result<Vec<RepoState>, _> = join_all(downloads).await.into_iter().collect();
         let downloads = downloads?;

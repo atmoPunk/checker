@@ -5,7 +5,7 @@ pub use crate::program::Program;
 pub use crate::variant::Variant;
 use async_std::fs;
 use serde::{Deserialize, Serialize};
-use slog::{info, o, Logger};
+use slog::{error, info, o, Logger};
 use std::process::Command;
 use std::time::Instant;
 
@@ -50,11 +50,17 @@ impl Student {
         Ok(())
     }
 
-    pub async fn download(&self) -> Result<RepoState, std::io::Error> {
+    pub async fn download(&self, logger: Logger) -> Result<RepoState, std::io::Error> {
         let cloned = clone_repo(&self.program.owner, &self.program.repo)?;
         if cloned == RepoState::Old {
-            pull_repo(&self.program.owner, &self.program.repo)
+            let res = pull_repo(&self.program.owner, &self.program.repo);
+            match &res {
+                Ok(r) => info!(logger, "{:?}", r),
+                Err(e) => error!(logger, "{:?}", e),
+            } // TODO: format better
+            res
         } else {
+            info!(logger, "Repo downloaded");
             Ok(cloned)
         }
     }

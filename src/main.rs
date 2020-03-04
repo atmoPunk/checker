@@ -20,6 +20,8 @@ struct Commit {
     message: String,
 }
 
+// TODO: remove unwraps
+
 // TODO: get commit sha while downloading, so we dont have to go to github now
 fn update_results(results: HashMap<String, Result<(), LabError>>, lab: &mut Lab) {
     for (name, s) in results.iter() {

@@ -3,6 +3,13 @@ use std::fs::{self, DirBuilder};
 use std::path::Path;
 use std::process::Command;
 
+// TODO: commit sha in Updated state
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum RepoState {
+    Old,
+    Updated,
+}
+
 pub fn get_commits(owner: &str, repo: &str) -> Result<serde_json::value::Value, std::io::Error> {
     let resp = ureq::get(&format!(
         "https://api.github.com/repos/{}/{}/commits",
@@ -19,14 +26,11 @@ pub fn get_commits(owner: &str, repo: &str) -> Result<serde_json::value::Value, 
     }
 }
 
-pub fn clone_repo(owner: &str, repo: &str) -> std::io::Result<()> {
+pub fn clone_repo(owner: &str, repo: &str) -> std::io::Result<RepoState> {
     let path = format!("students/{}/{}", owner, repo);
     let mut path = Path::new(&path);
     if fs::metadata(&path).is_ok() {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::AlreadyExists,
-            "Repo already cloned",
-        ));
+        return Ok(RepoState::Old);
     }
     path = path.parent().unwrap();
     DirBuilder::new().recursive(true).create(&path)?;
@@ -40,10 +44,10 @@ pub fn clone_repo(owner: &str, repo: &str) -> std::io::Result<()> {
             String::from_utf8(clone.stderr).unwrap(),
         ));
     }
-    Ok(())
+    Ok(RepoState::Updated)
 }
 
-pub fn pull_repo(owner: &str, repo: &str) -> std::io::Result<()> {
+pub fn pull_repo(owner: &str, repo: &str) -> std::io::Result<crate::student::RepoState> {
     let path = format!("students/{}/{}", owner, repo);
     let path = Path::new(&path);
     fs::metadata(&path)?;
@@ -57,7 +61,11 @@ pub fn pull_repo(owner: &str, repo: &str) -> std::io::Result<()> {
             String::from_utf8(pull.stderr).unwrap(),
         ));
     }
-    Ok(())
+    if pull.stdout.starts_with(b"Already") {
+        Ok(RepoState::Old)
+    } else {
+        Ok(RepoState::Updated)
+    }
 }
 
 pub fn write_comment(

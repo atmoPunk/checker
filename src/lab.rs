@@ -1,6 +1,7 @@
 pub use crate::program::{Program, RunnerError};
 pub use crate::student::Student;
 pub use crate::test::Test;
+pub use crate::github::RepoState;
 
 use futures::future::join_all;
 use serde::{Deserialize, Serialize};
@@ -8,8 +9,8 @@ use std::collections::HashMap;
 use slog::{Drain, Logger, o};
 
 fn create_default_logger() -> Logger {
-    let decorator = slog_term::TermDecorator::new().build();
-    let drain = slog_term::CompactFormat::new(decorator).build().fuse();
+    let decorator = slog_term::TermDecorator::new().build(); // TODO: log to file
+    let drain = slog_term::FullFormat::new(decorator).build().fuse();
     let drain = slog_async::Async::new(drain).build().fuse();
 
     slog::Logger::root(drain, o!("version" => "0.1"))
@@ -56,14 +57,18 @@ impl Lab {
         result
     }
 
-    pub async fn download_all(&self) -> Result<(), std::io::Error> {
+    /// Returns names of students, which repo state changed
+    pub async fn download_all(&self) -> Result<Vec<String>, std::io::Error> {
         let mut downloads = Vec::with_capacity(self.students.len());
-        for (_, s) in self.students.iter() {
+        let mut students = Vec::with_capacity(self.students.len());
+        for (name, s) in self.students.iter() {
+            students.push(name.clone());
             downloads.push(s.download());
         }
-        let downloads: Result<Vec<_>, _> = join_all(downloads).await.into_iter().collect();
-        downloads?;
-        Ok(())
+        let downloads: Result<Vec<RepoState>, _> = join_all(downloads).await.into_iter().collect();
+        let downloads = downloads?;
+        let students: Vec<String> = students.into_iter().enumerate().filter(|&(i, _)| downloads[i] == RepoState::Updated).map(|(_, name)| name).collect();
+        Ok(students)
     }
 }
 

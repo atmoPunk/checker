@@ -48,7 +48,6 @@ impl Program {
             Lang::Cpp => {
                 // Currently we are using user-made Makefiles
                 let path_to_src = self.path();
-                dbg!(&path_to_src);
                 let build = Command::new("make").current_dir(path_to_src).output();
                 match build {
                     Ok(output) => {

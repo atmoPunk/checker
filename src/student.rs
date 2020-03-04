@@ -2,6 +2,7 @@ pub use crate::github::{clone_repo, pull_repo};
 pub use crate::lab::LabError;
 pub use crate::program::Program;
 pub use crate::variant::Variant;
+pub use crate::github::RepoState;
 use async_std::fs;
 use serde::{Deserialize, Serialize};
 use std::process::Command;
@@ -49,14 +50,13 @@ impl Student {
         Ok(())
     }
 
-    pub async fn download(&self) -> Result<(), std::io::Error> {
-        if let Err(e) = clone_repo(&self.program.owner, &self.program.repo) {
-            if e.kind() != std::io::ErrorKind::AlreadyExists {
-                return Err(e);
-            }
+    pub async fn download(&self) -> Result<RepoState, std::io::Error> {
+        let cloned = clone_repo(&self.program.owner, &self.program.repo)?;
+        if cloned == RepoState::Old {
+            pull_repo(&self.program.owner, &self.program.repo)
+        } else {
+            Ok(cloned)
         }
-
-        pull_repo(&self.program.owner, &self.program.repo)
     }
 
     pub fn build_doxygen(&self) -> Result<(), LabError> {

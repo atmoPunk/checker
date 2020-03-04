@@ -1,13 +1,13 @@
+pub use crate::github::RepoState;
 pub use crate::github::{clone_repo, pull_repo};
 pub use crate::lab::LabError;
 pub use crate::program::Program;
 pub use crate::variant::Variant;
-pub use crate::github::RepoState;
 use async_std::fs;
 use serde::{Deserialize, Serialize};
+use slog::{info, o, Logger};
 use std::process::Command;
 use std::time::Instant;
-use slog::{Logger, o, info};
 
 /// Path to doxygen config
 static DOXYFILE: &str = "/home/atmopunk/doxygen.config";
@@ -44,7 +44,7 @@ impl Student {
         for i in 0..self.var.tests.len() {
             let test_logger = logger.new(o!("test" => i));
             self.check_test(i, test_logger).await? // '?' syntax - if we encounter a Err -> we return early and send it up
-                                      // else - we continure running
+                                                   // else - we continure running
         }
 
         Ok(())

@@ -54,9 +54,9 @@ fn main() {
     let mut lab: Lab = serde_json::from_reader(reader).expect("Can't deserialize json");
     loop {
         let update = lab.download_all(); // Download or update student repos
-        block_on(update).unwrap(); // TODO: return students that changed, and run tests only for these students
+        let students = block_on(update).unwrap(); // TODO: return students that changed, and run tests only for these students
 
-        let future = lab.check_all(); // Run student programs on tests
+        let future = lab.check_students(students); // Run student programs on tests
         let results = block_on(future);
 
         update_results(results, &mut lab); // Send results to github comments

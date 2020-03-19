@@ -65,7 +65,7 @@ impl Student {
         }
     }
 
-    pub fn build_doxygen(&self) -> Result<(), LabError> {
+    fn build_doxygen(&self) -> Result<(), LabError> {
         let folder = self.program.path();
         println!("folder: {:?}", folder);
         let mut xmlfolder = folder.clone();
@@ -86,6 +86,12 @@ impl Student {
             .unwrap();
         //concatenate.stdout TODO: dump this to all xml
         Ok(())
+    }
+
+    fn build_clang_ast(&self) -> Result<(), LabError> {
+        // TODO: Use mark_includes.py script to remove unnecessary output
+        // TODO: Think how we ccan concatenate all files together, so it works
+        unimplemented!()
     }
 
     /// Checks a single test without building

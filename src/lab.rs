@@ -39,9 +39,9 @@ impl Lab {
         self.students[student].check(student_logger).await
     }
 
-    pub fn build_doxygen(&self, student: &str) -> Result<(), LabError> {
-        self.students[student].build_doxygen()
-    }
+    // pub fn build_doxygen(&self, student: &str) -> Result<(), LabError> {
+    //     self.students[student].build_doxygen()
+    // }
 
     /// Checks all students
     pub async fn check_all(&self) -> HashMap<String, Result<(), LabError>> {

@@ -6,6 +6,7 @@ mod program;
 mod student;
 mod test;
 mod variant;
+mod ast;
 
 use futures::executor::block_on;
 pub use lab::*;
@@ -48,6 +49,9 @@ fn update_results(results: HashMap<String, Result<(), LabError>>, lab: &mut Lab)
 }
 
 fn main() {
+    let res = ast::merge_with_incl_markers(std::path::Path::new("/home/atmopunk/Documents/Code/test1")).unwrap();
+    return;
+
     let file_config = OpenOptions::new()
         .read(true)
         .open("config.json")

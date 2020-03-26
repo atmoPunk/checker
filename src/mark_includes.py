@@ -10,20 +10,31 @@ folder = sys.argv[1]
 
 (_, _, files) = next(os.walk(folder))
 
-files = list(filter(lambda f: f.endswith('.cpp') or f.endswith('.c') or f.endswith('.h'), files))  # TODO: use better filter
+files = list(filter(lambda f: f.endswith('.cpp') or f.endswith('.c') or f.endswith('.h') or f.endswith('.hpp'), files))
 
 
 content = []
 marker_counter = 0
+already_included = set()
 
-for filename in files:  # TODO: sort this (.h first)
+def add_to_content(filename):
+    if filename in already_included:
+        return
     with open(os.path.join(folder, filename)) as f:
-        content.extend(f.readlines())
+        already_included.add(filename)
+        for line in f.readlines():
+            if line.startswith('#include "'):
+                incl = line[10:-2]
+                add_to_content(incl)
+            else:
+                content.append(line)
     content.append('\n')
 
+for filename in sorted(files, key=lambda x: not x.endswith('.h') and not x.endswith('.hpp')):  # TODO: does not understand dirs
+    add_to_content(filename)
 
-with open('tmp-concat.cpp', 'w') as f:  # TODO: select correct extension
-    for line in content:  # TODO: descend into local includes, and remember them, so we can live with #pragma once and whatever
+with open('tmp-concat.cpp', 'w') as f:
+    for line in content:  # TODO: check if multiple '#pragma once' break anything
         if line.startswith('#include <'):  # global include
             f.write('int __INCLUDE_MARKER_START_' + str(marker_counter) + '__;\n')
             f.write(line)
@@ -81,13 +92,13 @@ clang_invalid_sloc = re.compile(r'<invalid sloc>')
 decl_identifier = re.compile(r'(VarDecl|ParmVarDecl|FunctionDecl) (0x[0-9a-f]{12}) (.+) (.+) (\'.+\')( cinit)?')
 # 2nd group - address
 # 4th group - id
-decl_record = re.compile(r'CxxRecordDecl (0x[0-9a-f]{12}) (.+) (class|struct) ([0-9a-zA-Z]+)( definition)?')
+decl_record = re.compile(r'CXXRecordDecl (0x[0-9a-f]{12}) (.+) (class|struct) ([0-9a-zA-Z]+)( definition)?')
 # 4th group - id
-decl_method = re.compile(r'CxxMethodDecl (0x[0-9a-f]{12}) (.+) ([0-9a-zA-Z]+) (\'.+\')')
+decl_method = re.compile(r'CXXMethodDecl (0x[0-9a-f]{12}) (.+) ([0-9a-zA-Z]+) (\'.+\')')
 # 3rd group
 decl_field = re.compile(r'FieldDecl (0x[0-9a-f]{12}) (.+) ([0-9a-zA-Z]+) (\'.+\')')
 # 3rd_group
-# TODO: MemberExpr, Constructor, Destructor ...
+# TODO: MemberExpr, Constructor, Destructor, ThisExpr ...
 
 use_identifier = re.compile(r'(Var|ParmVar|Function) (0x[0-9a-f]{12}) (\'.+\') (\'.+\')')
 # 2nd group - address
@@ -130,7 +141,6 @@ for token in tokens:
             tmp = t[:u.start(3)]
             tmp += t[u.end(3) + 1:]
             token[i] = tmp
-
 
 
 for token in tokens:

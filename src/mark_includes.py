@@ -7,6 +7,7 @@ import json
 from collections import defaultdict
 
 folder = sys.argv[1]
+student = sys.argv[2] if 2 < len(sys.argv) else None
 
 (_, _, files) = next(os.walk(folder))
 
@@ -98,7 +99,11 @@ decl_method = re.compile(r'CXXMethodDecl (0x[0-9a-f]{12}) (.+) ([0-9a-zA-Z]+) (\
 # 3rd group
 decl_field = re.compile(r'FieldDecl (0x[0-9a-f]{12}) (.+) ([0-9a-zA-Z]+) (\'.+\')')
 # 3rd_group
-# TODO: MemberExpr, Constructor, Destructor, ThisExpr ...
+# TODO: MemberExpr, Constructor, Destructor, CXXCtorInitializer ...
+# TODO: Skip implicit from clang? -> implicit construtors, desctructors etc
+this_expr = re.compile(r'CXXThisExpr (0x[0-9a-f]{12}) (.+) \'(const )?(\w+) \*\'( implicit)? this')  # 4th
+membr_expr = re.compile(r'MemberExpr (0x[0-9a-f]{12}) (.+) (->|\.)(\w+)? (.+)')  # 4th
+
 
 use_identifier = re.compile(r'(Var|ParmVar|Function) (0x[0-9a-f]{12}) (\'.+\') (\'.+\')')
 # 2nd group - address
@@ -135,6 +140,16 @@ for token in tokens:
         if m:
             tmp = t[:m.start(3)]
             tmp += t[m.end(3) + 1:]
+            token[i] = tmp
+        m = this_expr.match(t)
+        if m:
+            tmp = t[:m.start(4)]
+            tmp += t[m.end(4) + 1:]
+            token[i] = tmp
+        m = membr_expr.match(t)
+        if m:
+            tmp = t[:m.start(4)]
+            tmp += t[m.end(4):]  # do not skip whitespace
             token[i] = tmp
         u = use_identifier.search(t)
         if u:
@@ -185,7 +200,7 @@ for token in tokens:
             trig3 = t
             hashes[hashlib.md5(bytes((trig1 + trig2 + trig3), 'utf-8')).hexdigest()] += 1
 
-with open('result', 'w') as f:
+with open(student if student else 'result', 'w') as f:
     json.dump(hashes, f)
 
     

@@ -68,9 +68,22 @@ with open('tmp-ast-stripped', 'w') as f:
         f.write(line)
 
 tokens = []
+impl_level = -1
 with open('tmp-ast-stripped') as f:
     token = None
     for line in f.readlines():
+        if ' implicit ' in line:
+            # print("FOUND IMPLICIT")
+            for (index, ch) in enumerate(line):
+                if ch.isalpha():
+                    impl_level = index
+                    break
+            continue
+        if impl_level != -1:
+            if line[index].isalpha():
+                impl_level = -1
+            else:
+                continue    
         if line[1] == '-' and line[2].isalpha():
             if token:
                 tokens.append(token)
@@ -84,9 +97,14 @@ with open('tmp-ast-stripped') as f:
     if token:
         tokens.append(token)
 
+with open('tmp-ast-no-impl-and-lines', 'w') as f:
+    for token in tokens:
+        for line in token:
+            f.write(line)
+            f.write('\n')
 
 clang_address = re.compile(r'0x[0-9a-f]{12}')
-clang_pos = re.compile(r'((<|, )(tmp-concat\.cpp|line|col)(:[0-9]+){0,2})+')
+clang_pos = re.compile(r'((<|, )(tmp-concat\.cpp|line|col|scratch space)(:[0-9]+){0,2})+')
 clang_exact_pos = re.compile(r'(line|col)(:[0-9]+){0,2}')
 clang_invalid_sloc = re.compile(r'<invalid sloc>')
 
@@ -99,13 +117,16 @@ decl_method = re.compile(r'CXXMethodDecl (0x[0-9a-f]{12}) (.+) ([0-9a-zA-Z]+) (\
 # 3rd group
 decl_field = re.compile(r'FieldDecl (0x[0-9a-f]{12}) (.+) ([0-9a-zA-Z]+) (\'.+\')')
 # 3rd_group
-# TODO: MemberExpr, Constructor, Destructor, CXXCtorInitializer ...
-# TODO: Skip implicit from clang? -> implicit construtors, desctructors etc
+# TODO: Constructor, Destructor, CXXCtorInitializer, NamespaceDecl, etc
+template_decl = re.compile(r'ClassTemplateDecl (0x[0-9a-f]{12}) (.+) (\w+)')  # 3rd
+
 this_expr = re.compile(r'CXXThisExpr (0x[0-9a-f]{12}) (.+) \'(const )?(\w+) \*\'( implicit)? this')  # 4th
 membr_expr = re.compile(r'MemberExpr (0x[0-9a-f]{12}) (.+) (->|\.)(\w+)? (.+)')  # 4th
+templ_parm_decl = re.compile(r'NonTypeTemplateParmDecl (.+) (\w+)')  # 2nd
 
 
-use_identifier = re.compile(r'(Var|ParmVar|Function) (0x[0-9a-f]{12}) (\'.+\') (\'.+\')')
+
+use_identifier = re.compile(r'(Var|ParmVar|Function|NonTypeTemplateParm) (0x[0-9a-f]{12}) (\'.+\') (\'.+\')')
 # 2nd group - address
 # 3th group - id
 
@@ -116,45 +137,43 @@ trig1 = None
 trig2 = None
 trig3 = None
 
+
 # TODO: remove identifier names or make them kinda same
 # (in tokens make transform them to 'a', 'b', 'c' and so on)
 # or something like that
 for token in tokens:
-    for (i, t) in enumerate(token):
-        m = decl_identifier.match(t)
-        if m:
-            tmp = t[:m.start(4)]
-            tmp += t[m.end(4) + 1:]
+    for (i, _) in enumerate(token):
+        if m := decl_identifier.match(token[i]):
+            tmp = token[i][:m.start(4)]
+            tmp += token[i][m.end(4) + 1:]
             token[i] = tmp
-        m = decl_record.match(t)
-        if m:
-            tmp = t[:m.start(4)]
-            tmp += t[m.end(4) + 1:]
+        if m := decl_record.match(token[i]):
+            tmp = token[i][:m.start(4)]
+            tmp += token[i][m.end(4) + 1:]
             token[i] = tmp
-        m = decl_method.match(t)
-        if m:
-            tmp = t[:m.start(3)]
-            tmp += t[m.end(3) + 1:]
+        if m := decl_method.match(token[i]):
+            tmp = token[i][:m.start(3)]
+            tmp += token[i][m.end(3) + 1:]
             token[i] = tmp
-        m = decl_field.match(t)
-        if m:
-            tmp = t[:m.start(3)]
-            tmp += t[m.end(3) + 1:]
+        if m := decl_field.match(token[i]):
+            tmp = token[i][:m.start(3)]
+            tmp += token[i][m.end(3) + 1:]
+            token[i] = tmp 
+        if m := this_expr.match(token[i]):
+            tmp = token[i][:m.start(4)]
+            tmp += token[i][m.end(4) + 1:]
             token[i] = tmp
-        m = this_expr.match(t)
-        if m:
-            tmp = t[:m.start(4)]
-            tmp += t[m.end(4) + 1:]
+        if m := membr_expr.match(token[i]):
+            tmp = token[i][:m.start(4)]
+            tmp += token[i][m.end(4):]  # do not skip whitespace
             token[i] = tmp
-        m = membr_expr.match(t)
-        if m:
-            tmp = t[:m.start(4)]
-            tmp += t[m.end(4):]  # do not skip whitespace
+        if m := template_decl.match(token[i]):
+            tmp = token[i][:m.start(3)]
+            tmp += token[i][m.end(3) + 1:]
             token[i] = tmp
-        u = use_identifier.search(t)
-        if u:
-            tmp = t[:u.start(3)]
-            tmp += t[u.end(3) + 1:]
+        if u := use_identifier.search(token[i]):
+            tmp = token[i][:u.start(3)]
+            tmp += token[i][u.end(3) + 1:]
             token[i] = tmp
 
 

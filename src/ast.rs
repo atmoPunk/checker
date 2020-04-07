@@ -1,56 +1,43 @@
+use std::fs::{read_dir, File};
 use std::path::{Path, PathBuf};
-use std::fs::{File, read_dir};
-use std::io::{BufRead, BufReader, Write};
-use std::ffi::OsStr;
+use std::process::Command;
 
-
-
-
-pub fn merge_with_incl_markers(dir: &Path) -> Result<PathBuf, String> {
-    if !dir.is_dir() {
-        return Err(format!("{} is not a directory", dir.to_str().unwrap()));
+pub fn run_script(dir: PathBuf, result: String) -> Result<(), ()> {
+    let res = Command::new("python")
+        .args(&["src/mark_includes.py", dir.to_str().unwrap(), &result[..]])
+        .output();
+    if res.is_err() {
+        return Err(());
     }
 
-    let mut lines: Vec<String> = Vec::new();
-    let mut marker_count = 0;
-    for entry in read_dir(dir).unwrap() {
-        let entry = entry.unwrap();
-        let path = entry.path();
-        if path.is_dir() {
-            continue
-        }
-        if let None = path.extension() {
-            continue
-        }
-        match path.extension().unwrap().to_str().unwrap() {
-            "h" | "c" | "cpp" => {
-                let file = File::open(path).unwrap();
-                let reader = BufReader::new(file);
-                for line in reader.lines() {
-                    let line = line.unwrap();
-                    if line.starts_with("#include <") {
-                        lines.push(format!("int __INCLUDE_MARKER_START_{}__\n", marker_count));
-                        lines.push(line);
-                        lines.push(String::from("\n"));
-                        lines.push(format!("int __INCLUDE_MARKER_END_{}__\n", marker_count));
-                        marker_count += 1;
-                    } else {
-                        lines.push(line);
-                        lines.push(String::from("\n"));
-                    }
-                }
-                lines.push("\n".to_owned());
-            },
-            _ => continue,
-        }
+    let res = res.unwrap();
+    if !res.stderr.is_empty() {
+        return Err(());
     }
 
-    let res = PathBuf::from("tmp-res.cpp");
+    Ok(())
+}
 
-    let mut resfile = File::create(&res).unwrap();
-    for line in lines.iter() {
-        resfile.write_all(line.as_bytes()).unwrap();
+pub fn add_to_index(hashes: PathBuf, not_up: i32, not_down: i32) -> Result<(), ()> {
+    let output = Command::new("python")
+        .args(&[
+            "src/index.py",
+            hashes.to_str().unwrap(),
+            &not_down.to_string()[..],
+            &not_up.to_string()[..],
+        ])
+        .output();
+    if output.is_err() {
+        return Err(());
     }
 
-    Ok(res)
+    let output = output.unwrap();
+
+    if !output.status.success() {
+        return Err(());
+    }
+
+    // TODO: parse outbut, build HashMap<Name, number of collisions>
+
+    Ok(())
 }

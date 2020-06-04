@@ -8,25 +8,67 @@ from collections import defaultdict
 
 folder = sys.argv[1]
 student = sys.argv[2] if 2 < len(sys.argv) else None
+excluded_imports_file = sys.argv[3] if 3 < len(sys.argv) else None
 
+excluded_imports = []
+
+if excluded_imports_file:
+    with open(excluded_imports_file) as f:
+        excluded_imports = list(f.readlines())
+        excluded_imports = list(map(lambda s: s.strip(), excluded_imports))
+
+# print(excluded_imports)
+
+start_dir = os.getcwd()
 (_, _, files) = next(os.walk(folder))
 
-files = list(filter(lambda f: f.endswith('.cpp') or f.endswith('.c') or f.endswith('.h') or f.endswith('.hpp'), files))
+os.chdir(folder)
 
+files = list(filter(lambda f: f.endswith('.cpp') or f.endswith('.c') or f.endswith('.h') or f.endswith('.hpp'), files))
 
 content = []
 marker_counter = 0
 already_included = set()
+additional_cpps = set()
 
 def add_to_content(filename):
+    for excl in excluded_imports:
+        if excl in filename:
+            return
     if filename in already_included:
         return
-    with open(os.path.join(folder, filename)) as f:
+    print(os.getcwd(), filename, sep='/')
+    with open(filename) as f:
         already_included.add(filename)
-        for line in f.readlines():
+        for line in f.readlines(): # TODO: will not understand if include is in block comment
             if line.startswith('#include "'):
-                incl = line[10:-2]
-                add_to_content(incl)
+                incl = line[10: 10 + line[10:].find('"') ]
+                incl_dirs = incl.rsplit('/', 1)
+                cur_dir = os.getcwd()
+                if len(incl_dirs) > 1:
+                    os.chdir(incl_dirs[0])
+                    add_to_content(incl_dirs[1])
+                    (_, _, next_files) = next(os.walk(os.getcwd()))
+                    next_files = list(filter(lambda f: f.endswith('.cpp') or f.endswith('.c') or f.endswith('.h') or f.endswith('.hpp'), next_files))
+                    for next_filename in sorted(next_files, key=lambda x: not x.endswith('.h') and not x.endswith('.hpp')):  # TODO: does not understand dirs
+                        add_to_content(next_filename)
+                else:
+                    add_to_content(incl)
+                os.chdir(cur_dir)
+            elif line.startswith('#include"'):
+                incl = line[9: 9 + line[9:].find('"')]
+                incl_dirs = incl.rsplit('/', 1)
+                cur_dir = os.getcwd()
+                if len(incl_dirs) > 1:
+                    os.chdir(incl_dirs[0])
+                    add_to_content(incl_dirs[1])
+                    (_, _, next_files) = next(os.walk(os.getcwd()))
+                    next_files = list(filter(lambda f: f.endswith('.cpp') or f.endswith('.c') or f.endswith('.h') or f.endswith('.hpp'), next_files))
+                    for next_filename in sorted(next_files, key=lambda x: not x.endswith('.h') and not x.endswith('.hpp')):  # TODO: does not understand dirs
+                        add_to_content(next_filename)
+                else:
+                    add_to_content(incl)
+                os.chdir(cur_dir)
             else:
                 content.append(line)
     content.append('\n')
@@ -34,9 +76,11 @@ def add_to_content(filename):
 for filename in sorted(files, key=lambda x: not x.endswith('.h') and not x.endswith('.hpp')):  # TODO: does not understand dirs
     add_to_content(filename)
 
+os.chdir(start_dir)
+
 with open('tmp-concat.cpp', 'w') as f:
     for line in content:  # TODO: check if multiple '#pragma once' break anything
-        if line.startswith('#include <'):  # global include
+        if line.startswith('#include <') or line.startswith('#include<'):  # include stdlib
             f.write('int __INCLUDE_MARKER_START_' + str(marker_counter) + '__;\n')
             f.write(line)
             f.write('int __INCLUDE_MARKER_END_' + str(marker_counter) + '__;\n')
@@ -72,16 +116,21 @@ impl_level = -1
 with open('tmp-ast-stripped') as f:
     token = None
     for line in f.readlines():
-        if ' implicit ' in line:
+        if ' implicit ' in line and impl_level == -1:
             # print("FOUND IMPLICIT")
+            # print(line)
             for (index, ch) in enumerate(line):
                 if ch.isalpha():
                     impl_level = index
                     break
             continue
         if impl_level != -1:
-            if line[index].isalpha():
-                impl_level = -1
+            for ii in range(impl_level + 1):
+                if line[ii].isalpha():
+                    impl_level = -1
+                    # print('DROP IMPLICIT')
+                    # print(line)
+                    break
             else:
                 continue    
         if line[1] == '-' and line[2].isalpha():
@@ -205,7 +254,7 @@ for token in tokens:
     
 
     for t in token:
-        print(t)
+        # print(t)
         if trig1 is None:
             trig1 = t
         elif trig2 is None:

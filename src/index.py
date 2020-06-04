@@ -32,11 +32,9 @@ with open(inp) as f:
 for h, count in hashes.items():
     index[h] += count
     if len(fileindex[h]) >= notify_down and len(fileindex[h]) < notify_up:
-        print('Hash ', h, ' is in notigying range, similar works:')
+        print('Hash', h, 'is in notifying range, similar works:')
         for work in fileindex[h]:
             print(work)
-        print()
-    }
     fileindex[h].append(inp)
 
 

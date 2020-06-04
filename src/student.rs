@@ -9,9 +9,6 @@ use slog::{error, info, o, Logger};
 use std::process::Command;
 use std::time::Instant;
 
-/// Path to doxygen config
-static DOXYFILE: &str = "/home/atmopunk/doxygen.config";
-
 /// Holds path to program, current variant and last check result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Student {
@@ -63,29 +60,6 @@ impl Student {
             info!(logger, "Repo downloaded");
             Ok(cloned)
         }
-    }
-
-    fn build_doxygen(&self) -> Result<(), LabError> {
-        let folder = self.program.path();
-        println!("folder: {:?}", folder);
-        let mut xmlfolder = folder.clone();
-        xmlfolder.push("xml");
-        println!("folder: {:?}", xmlfolder);
-
-        let _doxygen = Command::new("doxygen")
-            .arg(DOXYFILE)
-            .current_dir(folder)
-            .status()
-            .unwrap();
-        let xs = "xsltproc";
-        let _concatenate = Command::new(xs)
-            .current_dir(xmlfolder)
-            .arg("combine.xslt")
-            .arg("index.xml")
-            .output()
-            .unwrap();
-        //concatenate.stdout TODO: dump this to all xml
-        Ok(())
     }
 
     fn build_clang_ast(&self) -> Result<(), LabError> {

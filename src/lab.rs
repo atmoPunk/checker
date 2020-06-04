@@ -2,11 +2,13 @@ pub use crate::github::RepoState;
 pub use crate::program::{Program, RunnerError};
 pub use crate::student::Student;
 pub use crate::test::Test;
+pub use crate::ast::{gen_hashes, compare};
 
 use futures::future::join_all;
 use serde::{Deserialize, Serialize};
 use slog::{o, Drain, Logger};
 use std::collections::HashMap;
+use lettre::{Transport, SmtpTransport};
 
 fn create_default_logger() -> Logger {
     let decorator = slog_term::TermDecorator::new().build(); // TODO: log to file
@@ -14,6 +16,29 @@ fn create_default_logger() -> Logger {
     let drain = slog_async::Async::new(drain).build().fuse();
 
     slog::Logger::root(drain, o!("version" => "0.1"))
+}
+
+pub fn notify(name1: String, name2: String, coef: f32) {
+    let email = lettre_email::EmailBuilder::new()
+        .to("teacher@mail.ru") // TODO
+        .from("teacher@mail.ru")
+        .subject("Hello")
+        .text(&(name1 + &String::from(" ") + &name2 + &String::from(": ") + &coef.to_string()))
+        .build()
+        .unwrap();
+
+    let tls_builder = native_tls::TlsConnector::builder();
+
+    let tls_parameters = lettre::ClientTlsParameters::new("smtp.yandex.ru".to_string(), tls_builder.build().unwrap());
+
+    let mut mailer = lettre::SmtpClient::new(
+        ("smtp.yandex.ru", 465),
+        lettre::ClientSecurity::Wrapper(tls_parameters)).unwrap()
+            .authentication_mechanism(lettre::smtp::authentication::Mechanism::Login)
+            .credentials(lettre::smtp::authentication::Credentials::new(String::from("teacher@mail.ru"), String::from("password")))
+        .transport();
+
+    mailer.send(email.into()).unwrap();
 }
 
 /// Holds current students in a HashMap (Student name -> Student struct)
@@ -38,10 +63,6 @@ impl Lab {
         let student_logger = self.logger.new(o!("student" => student.to_owned()));
         self.students[student].check(student_logger).await
     }
-
-    // pub fn build_doxygen(&self, student: &str) -> Result<(), LabError> {
-    //     self.students[student].build_doxygen()
-    // }
 
     /// Checks all students
     pub async fn check_all(&self) -> HashMap<String, Result<(), LabError>> {
@@ -77,6 +98,15 @@ impl Lab {
         let mut result = HashMap::new();
         for i in 0..names.len() {
             result.insert(names[i].to_owned(), checks_finish[i].to_owned());
+            if checks_finish[i].is_ok() {
+                gen_hashes(self.students[&names[i]].program.path(), self.students[&names[i]].program.path().to_str().unwrap().to_owned() + "Hashes");
+            }
+            for j in 0..i {
+                let v = compare(self.students[&names[j]].program.path().to_str().unwrap().to_owned() + "Hashes", self.students[&names[i]].program.path().to_str().unwrap().to_owned() + "Hashes").unwrap();
+                if v > 0.4 {
+                    notify(names[i].clone(), names[j].clone(), v);
+                }
+            }
         }
         result
     }

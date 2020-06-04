@@ -21,4 +21,4 @@ hashes2 = defaultdict(int, hashes2)
 
 for k, v in hashes1.items():
     matches += min(hashes2[k], v)
-print(matches, 'out of', max(elements1, elements2))
+print(matches / min(elements1, elements2))

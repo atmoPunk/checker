@@ -36,7 +36,7 @@ fn update_results(results: HashMap<String, Result<(), LabError>>, lab: &mut Lab)
         match &lab.students[name].program.last_commit {
             Some(commit) => {
                 if commit != &last_commit {
-                    github::write_comment(owner, repo, &last_commit, &format!("{:?}", s)).unwrap();
+                    github::write_comment(owner, repo, &last_commit, &format!("{:?}", s)).unwrap(); // TODO: format better
                 }
             }
             None => {
@@ -49,10 +49,10 @@ fn update_results(results: HashMap<String, Result<(), LabError>>, lab: &mut Lab)
 }
 
 fn main() {
-    let res =
-        ast::merge_with_incl_markers(std::path::Path::new("/home/atmopunk/Documents/Code/test1"))
-            .unwrap();
-    return;
+    // let res =
+    //     ast::merge_with_incl_markers(std::path::Path::new("/home/atmopunk/Documents/Code/test1"))
+    //         .unwrap();
+    // return;
 
     let file_config = OpenOptions::new()
         .read(true)
